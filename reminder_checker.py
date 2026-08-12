@@ -5,7 +5,11 @@ device) - checks every registered account's reminders in Firestore, and
 for any reminder whose time has arrived and hasn't been notified yet:
   1. Sends an email to that account's address (Gmail SMTP)
   2. Sends a phone push notification via ntfy.sh (free, no account needed)
-Then marks it "notified" in Firestore so it's never sent twice.
+Then marks it "email_notified" in Firestore so it's never sent twice. This
+is a SEPARATE field from "notified", which the desktop app uses for its
+own local system-tray popup while it's open - keeping them separate means
+the app's local notifications and this script's cloud notifications never
+interfere with each other.
 
 This script is intentionally self-contained (doesn't import the desktop
 app's cloud_sync.py) so it has no dependency on the app's folder layout -
@@ -209,7 +213,7 @@ def main():
         changed = False
 
         for r in reminders:
-            if r.get("notified"):
+            if r.get("email_notified"):
                 continue
             try:
                 reminder_dt = datetime.fromisoformat(r["datetime"])
@@ -217,7 +221,7 @@ def main():
                 continue
             if reminder_dt <= now:
                 due_now.append(r)
-                r["notified"] = True
+                r["email_notified"] = True
                 changed = True
 
         for r in due_now:
