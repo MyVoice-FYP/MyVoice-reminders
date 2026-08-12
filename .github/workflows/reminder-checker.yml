@@ -1,0 +1,30 @@
+name: Reminder Checker
+
+on:
+  schedule:
+    # Runs every 5 minutes, 24/7 - completely independent of anyone's
+    # own device being on. GitHub's own servers run this.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab, for testing
+
+jobs:
+  check-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests google-auth
+
+      - name: Run reminder checker
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python reminder_checker.py
