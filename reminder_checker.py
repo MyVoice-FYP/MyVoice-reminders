@@ -210,7 +210,6 @@ def main():
             continue
 
         due_now = []
-        changed = False
 
         for r in reminders:
             if r.get("email_notified"):
@@ -221,20 +220,30 @@ def main():
                 continue
             if reminder_dt <= now:
                 due_now.append(r)
-                r["email_notified"] = True
-                changed = True
 
+        changed = False
         for r in due_now:
             print(f"  Notifying {email}: '{r['title']}'")
+            email_ok = False
             try:
                 send_email(
                     email,
                     f"MyVoice Reminder: {r['title']}",
                     f"Your reminder \"{r['title']}\" is due now.",
                 )
+                email_ok = True
             except Exception as e:
                 print(f"  [email] failed for {email}: {e}")
             send_push(email, "MyVoice Reminder", r["title"])
+
+            # Only mark as done once the email actually sent successfully -
+            # a credential/network failure should NOT silently mark this as
+            # "already notified" (that's what caused Farhan's early testing
+            # confusion: bad Gmail credentials the first time meant the flag
+            # got set even though nothing had actually been sent yet).
+            if email_ok:
+                r["email_notified"] = True
+                changed = True
 
         if changed:
             save_reminders(email, reminders)
