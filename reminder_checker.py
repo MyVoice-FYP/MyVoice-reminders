@@ -198,8 +198,10 @@ def send_push(email, title, message):
 
 # ---------------- MAIN ----------------
 def main():
-    now = datetime.now()  # naive local time - matches how the desktop app
-                           # saves reminder datetimes (Qt.ISODate, no tz)
+    # The desktop app now saves reminder datetimes as UTC (with a 'Z'
+    # suffix) - compare against UTC "now" here too, so this works correctly
+    # regardless of what timezone the user or this runner is in.
+    now = datetime.now(timezone.utc)
 
     emails = get_all_user_emails()
     print(f"Checking reminders for {len(emails)} account(s)...")
